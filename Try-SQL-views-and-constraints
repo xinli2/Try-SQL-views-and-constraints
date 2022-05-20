@@ -1,0 +1,37 @@
+-- 1. Views
+-- The KevinBacon view is a table of 
+-- the name of each actor that has been cast in a movie with Kevin Bacon, 
+-- along with a count of the number of times they have been cast with Kevin Bacon
+create view KevinBacon(actor_name,times) as 
+select aname as actor_name,count(aname) as times from (
+    select casting.actorid as aid,
+        actor.name as aname,
+        casting.movieid as mid
+    from casting left join actor on casting.actorid = actor.actorid
+    where casting.movieid in (
+        select movieid from casting where ACTORID = (select actorid from actor where name = 'Kevin Bacon')
+    ) )
+group by aname;
+
+-- The Popularity view is a table of 
+-- the ID, name, and composite score of each actor. 
+-- The composite score is the sum of the score * votes for every movie the actor has been cast.
+create view Popularity(actorid,name,score) as
+select casting.actorid,actor.name,sum(movie.score*movie.votes)
+from casting 
+inner join actor on casting.actorid = actor.actorid
+inner join movie on casting.movieid = movie.movieid
+group by casting.actorid,actor.name;
+-- 2. Constraints
+-- The default actor name is 'Adam Sandler'.
+ALTER TABLE actor MODIFY name DEFAULT 'Adam Sandler';
+-- The score for a movie must be a value between 0 and 10.
+alter table movie add constraint p_score check(score between 0 and 10);
+-- After you successfully set up the score constraint, 
+-- first you then disable the constraint; 
+-- second you enable the constraint. 
+-- (The lecture slides have a link to the ALTER TABLE document at oracle web site. 
+-- You should check the document to see how to write a enable disable clause using ENABLE or DISABLE in the ALTER TABLE statement.)
+alter table movie disable constraint p_score;
+alter table movie enable constraint p_score;
+Text only submission
